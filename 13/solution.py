@@ -33,7 +33,7 @@ def parse_line(line):
 def in_order(item1, item2, indent = 0):
 
     prefix = "" + "  " * indent
-    print(prefix + f"Compare {item1} vs {item2}")
+    # print(prefix + f"Compare {item1} vs {item2}")
 
     if isinstance(item1, int) and isinstance(item2, int):
         if item1 < item2:
@@ -43,32 +43,32 @@ def in_order(item1, item2, indent = 0):
         return Result.UNDETERMINED
 
     if isinstance(item1, list) and isinstance(item2, list):
-        for i, item in enumerate(item1):
-            if i == len(item2):
-                print("TWO")
-                return Result.OUT_OF_ORDER
-            item_result = in_order(item1[i], item2[i], indent + 1)
-            if item_result != Result.UNDETERMINED:
-                return item_result
-        if indent == 0:
+        to_compare = min(len(item1), len(item2))
+        for i in range(0,to_compare):
+            i_result = in_order(item1[i], item2[i], indent + 1)
+            if i_result != Result.UNDETERMINED:
+                return i_result
+        if len(item1) == len(item2):
+            return Result.UNDETERMINED
+        if len(item1) < len(item2):
             return Result.IN_ORDER
-        return Result.UNDETERMINED
+        return Result.OUT_OF_ORDER
     if isinstance(item1, list) and isinstance(item2, int):
         return in_order(item1, [item2], indent + 1)
     if isinstance(item1, int) and isinstance(item2, list):
         return in_order([item1], item2, indent + 1)
 
-    print("THREE")
-    return Result.OUT_OF_ORDER
+    assert False
 
 
 TEST_CASES = [
     ['[1,1,3,1,1]', '[1,1,5,1,1]', Result.IN_ORDER],
     ['[[1],[2,3,4]]', '[[1],4]', Result.IN_ORDER],
+    ['[[1],4]', '[[1],[2,3,4]]', Result.OUT_OF_ORDER],
     ['[9]','[[8,7,6]]', Result.OUT_OF_ORDER],
     ['[[4,4],4,4]','[[4,4],4,4,4]', Result.IN_ORDER],
     ['[7,7,7,7]','[7,7,7]', Result.OUT_OF_ORDER],
-    ['[]','[]', Result.IN_ORDER],
+    ['[]','[3]', Result.IN_ORDER],
     ['[[[]]]', '[[]]', Result.OUT_OF_ORDER]
 ]
 
@@ -81,10 +81,10 @@ def run_tests():
         input1 = parse_line(test_case[0])
         input2 = parse_line(test_case[1])
         result = in_order(input1, input2)
-        print(result)
+        # print(result)
         assert result == test_case[2]
 
-# run_tests()
+run_tests()
 
 # 3794 TOO Low
 # 5777 TOO HIGH
@@ -97,10 +97,10 @@ def part_1():
             input1 = parse_line(lines[3*i])
             input2 = parse_line(lines[3*i+1])
             result = in_order(input1, input2)
-            print(result)
             assert result != Result.UNDETERMINED
             if result == Result.IN_ORDER:
                 output += (i+1)
+        assert output == 5684
         print(output)
 
 part_1()
