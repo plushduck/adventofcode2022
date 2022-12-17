@@ -104,3 +104,45 @@ def part_1():
         print(output)
 
 part_1()
+
+def cmp_to_key(mycmp):
+    'Convert a cmp= function into a key= function'
+    class K:
+        def __init__(self, obj, *args):
+            self.obj = obj
+        def __lt__(self, other):
+            return mycmp(self.obj, other.obj) < 0
+        def __gt__(self, other):
+            return mycmp(self.obj, other.obj) > 0
+        def __eq__(self, other):
+            return mycmp(self.obj, other.obj) == 0
+        def __le__(self, other):
+            return mycmp(self.obj, other.obj) <= 0
+        def __ge__(self, other):
+            return mycmp(self.obj, other.obj) >= 0
+        def __ne__(self, other):
+            return mycmp(self.obj, other.obj) != 0
+    return K
+
+def packets_cmp(p1,p2):
+    result = in_order(p1,p2)
+    if result == Result.IN_ORDER:
+        return -1
+    if result == Result.OUT_OF_ORDER:
+        return 1
+    return 0
+
+def part_2():
+    with open('./input.txt') as f:
+        lines = f.read().splitlines()
+        packets = []
+        for l in lines:
+            if l != "":
+                packets.append(parse_line(l))
+        packets.extend([[[2]],[[6]]])
+        packets = sorted(packets, key=cmp_to_key(packets_cmp))
+        i1 = packets.index([[2]])+1
+        i2 = packets.index([[6]])+1
+        print(i1*i2)
+
+part_2()
