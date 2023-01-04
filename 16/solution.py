@@ -31,6 +31,7 @@ def parse_valves(filename):
             valves[name] = Valve(name, flow, adjacent)
         return valves
 
+# Calculate the distances between any two nodes
 def get_distances(valves):
     distances = {}
     for v in valves.values():
@@ -52,14 +53,16 @@ def get_distances(valves):
 
 
 def get_optimal_flow(valves, distances):
-    # Only concern ourselves with the starting valve and those with non-zero flow
+
+    # We only need to consider the visit order to nodes with flow valves
     flow_valves = [v.name for v in valves.values() if v.flow]
+
+    # The max possible flow occurs when all valves are open.
     max_possible_flow = 0
     for name in flow_valves:
         max_possible_flow += valves[name].flow
 
     # Do a depth first search
-    # TODO: Add pruning
     best_path = None
     best_flow = 0
     # Represents nodes that still need to be considered in this position, in a depth first sense.
@@ -81,14 +84,16 @@ def get_optimal_flow(valves, distances):
 
         # Select the next node:
         cur_node = search_nodes[-1].pop()
+
         # print(f"cur_node = {cur_node}")
         path.append(cur_node)
         search_nodes.append(set(flow_valves) - set(path))
             # search_nodes.append(copy(search_nodes[-1]))
         # print(f"new search_nodes = {search_nodes}")
-        print(f"{path}")
+        # print(f"{path}")
 
-        # Determine how long we'll stay at the current flow rate:
+        # We'll stay at the current flow rate until we reach a new node or
+        # the max number of steps has been reached.
         step_time = distances[frozenset((prev_node,cur_node))]
         step_time = min(step_time, 30 - path_time[-1])
         path_time.append(step_time+path_time[-1])
@@ -116,13 +121,21 @@ def get_optimal_flow(valves, distances):
 
         # Maybe update best path
         if path_time[-1] == 30 and path_flow_total[-1] > best_flow:
-            print("******** NEW BEST **********")
             best_path = copy(path)
             best_flow = path_flow_total[-1]
+            print(f"NEW BEST ({best_flow}) {path}")
 
         time_remaining = 30 - path_time[-1]
         max_flow_remaining = time_remaining * max_possible_flow
         max_path_flow_total = max_flow_remaining + path_flow_total[-1]
+
+        if not search_nodes[-1]:
+            assert path_time[-1] == 30
+
+        # Unwind the search path if any of the following are true:
+        # * There are no more paths to search with the currently-constructed path prefix
+        # * We've hit the max number of steps along the current path
+        # * The max possible total flow along the current path is less than the best path already discovered
         while search_nodes and (len(search_nodes[-1]) <= 0 or path_time[-1] == 30 or max_path_flow_total < best_flow) :
             # print("POPPING")
             search_nodes.pop()
@@ -140,13 +153,13 @@ def get_optimal_flow(valves, distances):
     print(f"best_path = {best_path}")
     print(f"best_flow = {best_flow}")
     print(f"max_possible_flow = {max_possible_flow}")
+    return best_flow
 
 def part_1(filename):
     print("PART 1")
     valves = parse_valves(filename)
     distances = get_distances(valves)
-    get_optimal_flow(valves, distances)
+    return get_optimal_flow(valves, distances)
 
-
-
-part_1('./input.txt')
+p1_ans = part_1('./input.txt')
+assert p1_ans == 1796
